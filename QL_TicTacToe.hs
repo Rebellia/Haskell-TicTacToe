@@ -1,12 +1,14 @@
 {-
-   Overall this was a good experience. I realized that I need to change how I think about my code. For example, the board used to be a global variable that I would try to update from various functions. Then I would be surprised that this global variable was never updated.
+Unfortunately, this code does not compile. There are several "can't match type" errors that need to be debugged. I did test the individual concepts ("Print the Board", "Play the Game", "Check the Winner") on their own prior to combining all of them together, but I did not leave myself enough time for that debugging process. Even so, I learned a lot from this experience. 
+
+Fun fact: The board used to be a global variable that I would try to update from various functions. (Spoiler: those update attempts were not successful.
 
 
-Some of my function declarations, [functionName] :: [input] -> [output], were causing errors and I rant out of time to figure out why so I chose to comment them out so that I could remember what my inputs and outputs would be 
+Some of my function declarations, [functionName] :: [input] -> [output], were causing errors and I ran out of time to figure out why so I chose to comment them out so that I could at least remember what my inputs and outputs would be 
 -}
 
 --------------   Print the Board ------------------
---- To print the current board ---
+--- To print the current board as a 3x3 grid---
 
 printActualBoard :: [(String, String)] -> IO()
 printActualBoard myBoard = do
@@ -17,7 +19,7 @@ printActualBoard myBoard = do
 
 
 --- To print the numpad illustration ---
-
+--- I want players to understand where their input will be placed ---
 printDemoBoard :: IO()
 printDemoBoard = do
     let myBoard = ["7", "8", "9", "4", "5", "6", "1", "2", "3"]
@@ -32,7 +34,7 @@ printDemoBoard = do
 
 playGame :: [Char] -> IO()
 playGame currentPlayer = do
-   -- Board was initially a global variable, but that wasn't updating the way it should have been
+   -- Board was initially a global variable, but that wasn't updating the way it should have been. It is now a local variable that will be properly updated.
    let board = [("7", "-"), ("8", "-"), ("9", "-"), ("4", "-"), ("5", "-"), ("6", "-"), ("1", "-"), ("2", "-"), ("3", "-")]
   
    takeTurn board currentPlayer
@@ -40,10 +42,22 @@ playGame currentPlayer = do
 
 takeTurn :: [([Char], [Char])] -> String -> IO()
 takeTurn currentBoard currentPlayer = do
-  --Initially board was in here, but I realized that it would constantly be overwritten if I did that
+  --Initially board was in here, but I realized that it would constantly be overwritten if I did that. So the board was moved to an overarching helper function.
   putStrLn "\n This is the currentBoard: "
   printActualBoard currentBoard
   
+
+{-
+  Grab the current board
+  If it's full without a winner, then it's a tie. Game over.
+  If player X has won, then congrats to them. Game over.
+  If player Y has won, then congrats to them. Game over.
+
+
+  Otherwise, the current player may pick a space
+  As long as that space is valid they can mark the space
+  Switch the player and repeat
+-}
   if isTie currentBoard
   then
       putStrLn "It's a tie!"
@@ -61,7 +75,7 @@ takeTurn currentBoard currentPlayer = do
         putStrLn ("\n Player " ++ currentPlayer ++ "has marked a space")
         takeTurn updatedBoard (changePlayer currentPlayer)
       else
-        putStrLn "Invlaid input. Please try again"
+        print ("Invlaid input. Please try again")
         takeTurn currentBoard currentPlayer
 
   
@@ -78,7 +92,7 @@ changePlayer currentPlayer =
 markSpace myBoard chosenSpace currentPlayer = do
     map(\ x -> if x == (chosenSpace, ' ') then (chosenSpace, 'x') else x) myBoard -}
 markSpace myBoard chosenSpace currentPlayer = 
-    map(\ x -> if x == (chosenSpace, ' ') then (chosenSpace, 'x') else x) myBoard
+    map(\ x -> if x == (chosenSpace, "-") then (chosenSpace, currentPlayer) else x) myBoard
 
 ------------ Gameplay Helper Functions -------------------------
 --isValid :: (String, String) -> Bool
@@ -94,6 +108,9 @@ anyEmpty myBoard = do
 
 
 --- Checking Winner ---
+{-
+    I am confident that there is a better, more effcient way to check for 3 characters in a row in a 3x3 grid. This is a brute force solution I've gone with for now and if I have time later on, then I will refactor it.
+-}
 checkSame :: [(String, String)] -> String -> String -> String -> Bool
 checkSame currentPlayer elem1 elem2 elem3 =
     -- If any are empty, no winner from this combo
@@ -119,7 +136,10 @@ isTie myBoard =
     then True
     else False
 
-
+{-
+    There is probably a mathematical solution to getting the 3 characters needed for comparison, but since there are only eight possible winning
+    combos, I felt comfortable just writing all eight of them out. If I have time, I will come back to refactor.
+-}
 hasWon :: [(String, String)] -> String -> Bool
 hasWon myBoard currentPlayer =
    -- horizontals
@@ -161,4 +181,4 @@ main = do
     putStrLn "\nTo take your turn, you will enter a number, 1 - 9, corresponding to the space you want to mark. Whoever gets three spaces in a row wins!"
     putStrLn "\n \'x\' will go first: \n"
 
-    --playGame "x"
+    playGame "x"
